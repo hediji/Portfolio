@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>متتبع المصاريف</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+const C = {
+  bg: "#F7F5F2", panel: "#FFFFFF", ink: "#242018", inkDim: "#8A8271",
+  line: "#E7E1D5", gold: "#B8863B", coral: "#C24E4E", teal: "#3E7D72", plum: "#6B4C7A",
+};
+
+const CATEGORIES = [
+  { name: "طعام", color: C.gold },
+  { name: "نقل", color: C.teal },
+  { name: "فواتير", color: C.coral },
+  { name: "تسوق", color: C.plum },
+  { name: "أخرى", color: C.inkDim },
+];
+
+function loadExpenses() {
+  try {
+    const raw = localStorage.getItem("expenses_v1");
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function ExpenseTracker() {
+  const [expenses, setExpenses] = useState(loadExpenses);
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState(CATEGORIES[0].name);
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  useEffect(() => {
+    try { localStorage.setItem("expenses_v1", JSON.stringify(expenses)); } catch {}
+  }, [expenses]);
+
+  const total = useMemo(() => expenses.reduce((s, e) => s + Number(e.amount || 0), 0), [expenses]);
+
+  const byCategory = useMemo(() => {
+    const map = {};
+    CATEGORIES.forEach((c) => (map[c.name] = 0));
+    expenses.forEach((e) => { map[e.category] = (map[e.category] || 0) + Number(e.amount || 0); });
+    return map;
+  }, [expenses]);
+
+  const addExpense = (e) => {
+    e.preventDefault();
+    if (!title.trim() || !amount || Number(amount) <= 0) return;
+    setExpenses((prev) => [
+      { id: Date.now(), title: title.trim(), amount: Number(amount), category, date },
+      ...prev,
+    ]);
+    setTitle(""); setAmount("");
+  };
+
+  const removeExpense = (id) => setExpenses((prev) => prev.filter((e) => e.id !== id));
+
+  return (
+    <div dir="rtl" className="min-h-screen w-full py-10 px-4" style={{ background: C.bg, fontFamily: "'Cairo','Tajawal',sans-serif", color: C.ink }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&family=Tajawal:wght@400;500;700&display=swap');`}</style>
+      <div className="max-w-3xl mx-auto">
+        <header className="mb-6 text-center">
+          <h1 className="text-2xl md:text-3xl font-black">متتبع المصاريف</h1>
+          <p className="text-sm mt-1" style={{ color: C.inkDim }}>سجّل مصاريفك اليومية وتابع إجماليك بسهولة</p>
+        </header>
+
+        {/* Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          <div className="col-span-2 md:col-span-1 rounded-2xl p-4" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
+            <p className="text-xs mb-1" style={{ color: C.inkDim }}>الإجمالي</p>
+            <p className="text-xl font-black">{total.toLocaleString()} ر.س</p>
+          </div>
+          {CATEGORIES.map((c) => (
+            <div key={c.name} className="rounded-2xl p-4" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
+              <p className="text-xs mb-1" style={{ color: c.color }}>{c.name}</p>
+              <p className="text-sm font-bold">{(byCategory[c.name] || 0).toLocaleString()} ر.س</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Add form */}
+        <form onSubmit={addExpense} className="rounded-2xl p-5 mb-6 grid grid-cols-1 md:grid-cols-5 gap-3" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="وصف المصروف"
+            className="md:col-span-2 px-3 py-2 rounded-lg text-sm outline-none" style={{ border: `1px solid ${C.line}` }} />
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} type="number" min="0" step="0.01" placeholder="المبلغ"
+            className="px-3 py-2 rounded-lg text-sm outline-none" style={{ border: `1px solid ${C.line}` }} />
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="px-3 py-2 rounded-lg text-sm outline-none" style={{ border: `1px solid ${C.line}` }}>
+            {CATEGORIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <input value={date} onChange={(e) => setDate(e.target.value)} type="date" className="flex-1 px-2 py-2 rounded-lg text-xs outline-none" style={{ border: `1px solid ${C.line}` }} />
+            <button type="submit" className="px-4 py-2 rounded-lg text-sm font-bold text-white shrink-0" style={{ background: C.gold }}>إضافة</button>
+          </div>
+        </form>
+
+        {/* List */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: C.panel, border: `1px solid ${C.line}` }}>
+          <div className="grid grid-cols-12 px-5 py-3 text-xs font-bold" style={{ borderBottom: `1px solid ${C.line}`, color: C.inkDim }}>
+            <span className="col-span-5 text-right">الوصف</span>
+            <span className="col-span-3 text-right">التصنيف</span>
+            <span className="col-span-2 text-right">التاريخ</span>
+            <span className="col-span-2 text-left">المبلغ</span>
+          </div>
+          {expenses.length === 0 && (
+            <p className="text-center text-sm py-10" style={{ color: C.inkDim }}>لا توجد مصاريف مسجّلة بعد</p>
+          )}
+          {expenses.map((e) => {
+            const cat = CATEGORIES.find((c) => c.name === e.category);
+            return (
+              <div key={e.id} className="grid grid-cols-12 items-center px-5 py-3 text-sm group" style={{ borderBottom: `1px solid ${C.line}` }}>
+                <span className="col-span-5 font-medium">{e.title}</span>
+                <span className="col-span-3">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: `${cat?.color}1A`, color: cat?.color }}>{e.category}</span>
+                </span>
+                <span className="col-span-2 text-xs" style={{ color: C.inkDim }}>{e.date}</span>
+                <span className="col-span-2 flex items-center justify-between">
+                  <span className="font-bold">{e.amount.toLocaleString()} ر.س</span>
+                  <button onClick={() => removeExpense(e.id)} aria-label="حذف" className="text-xs opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: C.coral }}>حذف</button>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[11px] mt-3 text-center" style={{ color: C.inkDim }}>البيانات تُحفظ محلياً في متصفحك.</p>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<ExpenseTracker />);
+</script>
+</body>
+</html>
