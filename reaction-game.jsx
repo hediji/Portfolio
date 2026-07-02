@@ -1,0 +1,228 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const C = {
+  bg: "#0A0C14",
+  panel: "#12151F",
+  grid: "#1C2130",
+  cyan: "#00E5FF",
+  magenta: "#FF2E88",
+  yellow: "#FFD23F",
+  lime: "#B6FF3B",
+  ink: "#F2F4FA",
+  inkDim: "#6C7290",
+};
+
+const TARGET_COLORS = [C.cyan, C.magenta, C.yellow, C.lime];
+const GAME_SECONDS = 30;
+const HOLE_COUNT = 9;
+
+export default function ReactionGame() {
+  const [phase, setPhase] = useState("idle"); // idle | playing | over
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [best, setBest] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_SECONDS);
+  const [activeHole, setActiveHole] = useState(null);
+  const [activeColor, setActiveColor] = useState(C.cyan);
+  const [missFlash, setMissFlash] = useState(false);
+  const [popKey, setPopKey] = useState(0);
+
+  const spawnRef = useRef(null);
+  const timerRef = useRef(null);
+  const activeTimeoutRef = useRef(null);
+  const lastHoleRef = useRef(null);
+
+  const clearAllTimers = () => {
+    clearTimeout(spawnRef.current);
+    clearTimeout(activeTimeoutRef.current);
+    clearInterval(timerRef.current);
+  };
+
+  const scheduleNext = useCallback((speed) => {
+    spawnRef.current = setTimeout(() => {
+      let hole = Math.floor(Math.random() * HOLE_COUNT);
+      if (hole === lastHoleRef.current) hole = (hole + 1) % HOLE_COUNT;
+      lastHoleRef.current = hole;
+      const color = TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)];
+      setActiveHole(hole);
+      setActiveColor(color);
+      setPopKey((k) => k + 1);
+
+      const life = Math.max(550, speed);
+      activeTimeoutRef.current = setTimeout(() => {
+        setActiveHole((cur) => {
+          if (cur === hole) {
+            setCombo(0);
+          }
+          return null;
+        });
+        scheduleNext(Math.max(500, speed - 15));
+      }, life);
+    }, 250 + Math.random() * 350);
+  }, []);
+
+  const startGame = () => {
+    clearAllTimers();
+    setScore(0);
+    setCombo(0);
+    setTimeLeft(GAME_SECONDS);
+    setActiveHole(null);
+    setPhase("playing");
+    scheduleNext(1400);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearAllTimers();
+          setPhase("over");
+          setActiveHole(null);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (phase === "over") {
+      setBest((b) => Math.max(b, score));
+    }
+  }, [phase, score]);
+
+  useEffect(() => () => clearAllTimers(), []);
+
+  const hit = (idx) => {
+    if (phase !== "playing" || idx !== activeHole) return;
+    clearTimeout(activeTimeoutRef.current);
+    setActiveHole(null);
+    setCombo((c) => {
+      const nc = c + 1;
+      setScore((s) => s + 10 + Math.min(nc, 10) * 2);
+      return nc;
+    });
+    scheduleNext(Math.max(500, 1350 - timeLeft * 20));
+  };
+
+  const missClick = () => {
+    if (phase !== "playing") return;
+    setMissFlash(true);
+    setTimeout(() => setMissFlash(false), 180);
+  };
+
+  return (
+    <div
+      dir="rtl"
+      className="min-h-screen w-full flex flex-col items-center py-10 px-4"
+      style={{
+        background: `radial-gradient(circle at 50% 0%, ${C.panel} 0%, ${C.bg} 60%)`,
+        fontFamily: "'Cairo', 'Segoe UI', sans-serif",
+        color: C.ink,
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&display=swap');
+        @keyframes pulseRing {
+          0% { box-shadow: 0 0 0 0 currentColor; }
+          70% { box-shadow: 0 0 0 14px transparent; }
+          100% { box-shadow: 0 0 0 0 transparent; }
+        }
+        @keyframes pop {
+          0% { transform: scale(0.3); opacity: 0; }
+          60% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+
+      <header className="text-center mb-6">
+        <p className="text-xs tracking-[0.35em] mb-2" style={{ color: C.magenta }}>
+          وضع الأركيد
+        </p>
+        <h1 className="text-3xl md:text-4xl font-black">اضغط بسرعة</h1>
+        <p className="text-sm mt-1" style={{ color: C.inkDim }}>
+          اضغط الدائرة المضيئة قبل ما تختفي — كل تتابع إصابات يرفع نقاطك
+        </p>
+      </header>
+
+      {/* Stats */}
+      <div className="flex gap-8 mb-6">
+        <Stat label="النقاط" value={score} color={C.cyan} />
+        <Stat label="التتابع" value={`x${combo}`} color={C.magenta} />
+        <Stat label="الوقت" value={timeLeft} color={C.yellow} />
+        <Stat label="أفضل نتيجة" value={best} color={C.lime} />
+      </div>
+
+      {/* Board */}
+      <div
+        className="relative grid grid-cols-3 gap-4 md:gap-5 p-6 rounded-3xl"
+        style={{
+          background: C.panel,
+          border: `1px solid ${C.grid}`,
+          transform: missFlash ? "translateX(2px)" : "none",
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) missClick();
+        }}
+      >
+        {Array.from({ length: HOLE_COUNT }).map((_, i) => {
+          const isActive = activeHole === i && phase === "playing";
+          return (
+            <button
+              key={i}
+              onClick={() => (isActive ? hit(i) : missClick())}
+              className="w-20 h-20 md:w-24 md:h-24 rounded-full relative flex items-center justify-center"
+              style={{ background: C.grid }}
+              aria-label={isActive ? "هدف نشط" : "فتحة فارغة"}
+            >
+              {isActive && (
+                <div
+                  key={popKey}
+                  className="absolute inset-1.5 rounded-full"
+                  style={{
+                    background: activeColor,
+                    color: activeColor,
+                    animation: "pop 0.18s ease-out, pulseRing 0.9s ease-out infinite",
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
+
+        {phase !== "playing" && (
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-3xl"
+            style={{ background: "rgba(10,12,20,0.9)" }}
+          >
+            <div className="text-center px-6">
+              {phase === "over" && (
+                <>
+                  <p className="text-xs tracking-[0.3em] mb-2" style={{ color: C.yellow }}>
+                    انتهت الجولة
+                  </p>
+                  <p className="text-2xl font-black mb-4">
+                    نتيجتك: <span style={{ color: C.cyan }}>{score}</span>
+                  </p>
+                </>
+              )}
+              <button
+                onClick={startGame}
+                className="px-6 py-2.5 rounded-full font-black text-sm"
+                style={{ background: C.cyan, color: C.bg }}
+              >
+                {phase === "idle" ? "ابدأ اللعب" : "إعادة المحاولة"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value, color }) {
+  return (
+    <div className="text-center">
+      <p className="text-[11px]" style={{ color: C.inkDim }}>{label}</p>
+      <p className="text-xl font-black tabular-nums" style={{ color }}>{value}</p>
+    </div>
+  );
+}
