@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>محفظة أعمال — تطوير واجهات ولوحات بيانات</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&family=Tajawal:wght@400;500;700&display=swap');
+  body { font-family: 'Cairo','Tajawal',sans-serif; }
+  .card { transition: transform .25s ease, box-shadow .25s ease; }
+  .card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px -12px rgba(0,0,0,0.35); }
+</style>
+</head>
+<body class="min-h-screen" style="background:#0F1115;color:#F2F2F0;">
+
+<header class="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center">
+  <p class="text-xs tracking-[0.35em] mb-3" style="color:#8B93A6;">PORTFOLIO</p>
+  <h1 class="text-3xl md:text-5xl font-black mb-4">أمثلة من أعمالي</h1>
+  <p class="text-sm md:text-base max-w-xl mx-auto" style="color:#8B93A6;">
+    مجموعة مشاريع توضح مهارات مختلفة: تصميم واجهات تفاعلية، لوحات بيانات، صفحات تسويقية، وأدوات إنتاجية عملية — كل مشروع مبني ومنشور فعلياً.
+  </p>
+</header>
+
+<main class="max-w-5xl mx-auto px-6 pb-20">
+  <div class="grid md:grid-cols-2 gap-6">
+
+    <a href="reaction-game.html" class="card rounded-3xl p-6 flex flex-col justify-between" style="background:linear-gradient(135deg,#12151F,#1C2130); border:1px solid #23283A; min-height:220px;">
+      <div>
+        <p class="text-xs font-bold mb-2" style="color:#FF2E88;">لعبة تفاعلية · أركيد</p>
+        <h2 class="text-2xl font-black mb-2" style="color:#00E5FF;">اضغط بسرعة</h2>
+        <p class="text-sm" style="color:#9AA1B8;">لعبة ردة فعل سريعة بتصميم نيون، رسوم متحركة، ونظام نقاط وتتابع إصابات.</p>
+      </div>
+      <span class="text-xs font-bold mt-4" style="color:#00E5FF;">افتح المشروع ←</span>
+    </a>
+
+    <a href="store-dashboard.html" class="card rounded-3xl p-6 flex flex-col justify-between" style="background:#FFFFFF; color:#241C15; border:1px solid #EAE3D6; min-height:220px;">
+      <div>
+        <p class="text-xs font-bold mb-2" style="color:#5B7553;">لوحة بيانات · تحليلات</p>
+        <h2 class="text-2xl font-black mb-2">لوحة تحكم نخيل</h2>
+        <p class="text-sm" style="color:#8C8172;">لوحة تحكم متجر بمؤشرات أداء، رسوم إيرادات شهرية، وقنوات بيع.</p>
+      </div>
+      <span class="text-xs font-bold mt-4" style="color:#5B7553;">افتح المشروع ←</span>
+    </a>
+
+    <a href="expense-tracker.html" class="card rounded-3xl p-6 flex flex-col justify-between" style="background:#FFFFFF; color:#242018; border:1px solid #E7E1D5; min-height:220px;">
+      <div>
+        <p class="text-xs font-bold mb-2" style="color:#B8863B;">أداة إنتاجية</p>
+        <h2 class="text-2xl font-black mb-2">متتبع المصاريف</h2>
+        <p class="text-sm" style="color:#8A8271;">تسجيل مصاريف يومية مصنّفة بفئات، مع إجمالي تلقائي وحفظ محلي للبيانات.</p>
+      </div>
+      <span class="text-xs font-bold mt-4" style="color:#B8863B;">افتح المشروع ←</span>
+    </a>
+
+    <a href="bunn-landing.html" class="card rounded-3xl p-6 flex flex-col justify-between" style="background:linear-gradient(135deg,#241812,#3A241A); border:1px solid #4A2F20; min-height:220px;">
+      <div>
+        <p class="text-xs font-bold mb-2" style="color:#E0A458;">صفحة هبوط · تسويق</p>
+        <h2 class="text-2xl font-black mb-2" style="color:#F4E3C8;">بُنّ — اشتراك قهوة</h2>
+        <p class="text-sm" style="color:#C9AF93;">صفحة تسويقية كاملة لخدمة اشتراك قهوة، بتصميم بصري وهوية جذابة.</p>
+      </div>
+      <span class="text-xs font-bold mt-4" style="color:#E0A458;">افتح المشروع ←</span>
+    </a>
+
+  </div>
+</main>
+
+<footer class="text-center pb-10 text-xs" style="color:#5C6478;">
+  كل مشروع أعلاه صفحة مستقلة تعمل بشكل كامل بدون أي إعداد إضافي.
+</footer>
+
+</body>
+</html>
